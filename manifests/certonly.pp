@@ -31,7 +31,10 @@
 # [*cron_success_command*]
 #   String representation of a command that should be run if the renewal command
 #   succeeds.
-#
+# [*cron_hourmax*]
+#   Integer specifying the argument to fqdn_rand for cron hour. Setting
+#   to 6 will run renewal between 0 and 6am.
+
 define letsencrypt::certonly (
   Array $domains                                            = [$title],
   Boolean $custom_plugin                                    = false,
@@ -44,6 +47,7 @@ define letsencrypt::certonly (
   Boolean $suppress_cron_output                             = false,
   $cron_before_command                                      = undef,
   $cron_success_command                                     = undef,
+  Integer $cron_hourmax                                     = 6,
 ) {
 
   if $plugin == 'webroot' {
@@ -92,7 +96,7 @@ define letsencrypt::certonly (
     } else {
       $cron_cmd = $renewcommand
     }
-    $cron_hour = fqdn_rand(24, $title) # 0 - 23, seed is title plus fqdn
+    $cron_hour = fqdn_rand($cron_hourmax, $title) # 0 - $cron_hourmax, seed is title plus fqdn
     $cron_minute = fqdn_rand(60, fqdn_rand_string(10,$title)) # 0 - 59, seed is title plus fqdn
     file { "${::letsencrypt::cron_scripts_path}/renew-${title}.sh":
       ensure  => 'file',
